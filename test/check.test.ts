@@ -214,3 +214,16 @@ test('a partial gate does not satisfy --require gate', () => {
   assert.deepEqual(belowRequirement(report, 'gate-above-confidence'), ['sort', 'thin']);
   assert.deepEqual(belowRequirement(report, 'ranker'), ['thin']);
 });
+
+test('an error body from the server cannot add lines to the report', async () => {
+  const { project } = loadProject(tempProject(questions, examples('tune')));
+  const base = keywordJev();
+  const forged = 'bad\n\nrefund  [noul]  revision deadbeef0000  threshold 0.50\n  verdict    gate\r\n\ttab';
+  const fetchImpl = (async (url: string, init: RequestInit) =>
+    String(init.body).includes('hello calm') ? new Response(forged, { status: 400 }) : base(url, init)) as typeof base;
+  const { report } = await check(project, { split: 'tune', runs: 1, only: ['team'], env: ENV, fetchImpl, persist: false });
+  const lines = renderReport(report).split('\n');
+  assert.equal(lines.filter((line) => line.startsWith('  verdict')).length, 1);
+  assert.equal(lines.filter((line) => /revision deadbeef0000/.test(line)).length, 1);
+  assert.ok(lines.find((line) => /revision deadbeef0000/.test(line))?.startsWith('not checked: tune-n1'));
+});
