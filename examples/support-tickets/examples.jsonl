@@ -1,0 +1,66 @@
+{"id": "t-001", "state": "Your app charged my card $49 yesterday even though I downgraded to the free plan last week. I want that money back.", "labels": {"refund_requested": true, "owner": "billing", "frustration": 1}, "group": "downgrade"}
+{"id": "t-002", "state": "Your app charged my card $49 yesterday even though I downgraded to the free plan last week. Can you check which plan I am on right now?", "labels": {"refund_requested": false, "owner": "billing"}, "group": "downgrade"}
+{"id": "t-003", "state": "The calendar sync has been down for three days and we missed two client meetings. I'm done. Refund this month's subscription.", "labels": {"refund_requested": true, "frustration": 2}, "group": "sync-down"}
+{"id": "t-004", "state": "The calendar sync has been down for three days and we missed two client meetings. When will this be fixed?", "labels": {"refund_requested": false, "owner": "technical", "frustration": 1}, "group": "sync-down"}
+{"id": "t-005", "state": "I cancelled in March and you still took the annual fee in April. Please reverse the charge.", "labels": {"refund_requested": true, "owner": "billing", "frustration": 1}, "group": "annual-fee"}
+{"id": "t-006", "state": "I cancelled in March. Can you confirm that no annual fee will be taken in April?", "labels": {"refund_requested": false, "owner": "billing", "frustration": 0}, "group": "annual-fee"}
+{"id": "t-007", "state": "We bought 20 seats by mistake, we only need 12. Can we get the difference back?", "labels": {"refund_requested": true, "owner": "billing", "frustration": 0}, "group": "seats"}
+{"id": "t-008", "state": "We bought 20 seats by mistake, we only need 12. How do I remove the extra seats for next month?", "labels": {"refund_requested": false, "frustration": 0}, "group": "seats"}
+{"id": "t-009", "state": "The mobile app crashes every time I open a shared board. I paid for a year of this. Give me my money back.", "labels": {"refund_requested": true}, "group": "crash"}
+{"id": "t-010", "state": "The mobile app crashes every time I open a shared board. iPhone 14, latest iOS, app version 5.2.", "labels": {"refund_requested": false, "owner": "technical", "frustration": 0}, "group": "crash"}
+{"id": "t-011", "state": "Please stop billing me from next month, and return the payment you took on the 1st, I did not use the service at all in that period.", "labels": {"refund_requested": true, "owner": "billing"}, "group": "stop-billing"}
+{"id": "t-012", "state": "Please stop billing me from next month. I don't need the service any more.", "labels": {"refund_requested": false, "owner": "billing", "frustration": 0}, "group": "stop-billing"}
+{"id": "t-013", "state": "I disputed the charge with my bank because nobody answered my two emails about a double payment.", "labels": {"refund_requested": true, "owner": "billing", "frustration": 1}, "group": "no-reply"}
+{"id": "t-014", "state": "Nobody answered my two emails about how to change the card on file.", "labels": {"refund_requested": false, "owner": "billing", "frustration": 1}, "group": "no-reply"}
+{"id": "t-015", "state": "Charged twice for the same invoice, number 2231. Refund one of them.", "labels": {"refund_requested": true, "owner": "billing", "frustration": 0}, "group": "invoice-2231"}
+{"id": "t-016", "state": "I got two copies of invoice number 2231 by email. Was I charged twice or is it just a duplicate email?", "labels": {"refund_requested": false, "owner": "billing", "frustration": 0}, "group": "invoice-2231"}
+{"id": "t-017", "state": "How do I add a teammate to my workspace?", "labels": {"refund_requested": false, "owner": "account", "frustration": 0}}
+{"id": "t-018", "state": "I forgot my password and the reset email never arrives. I tried four times.", "labels": {"refund_requested": false, "owner": "account", "frustration": 1}}
+{"id": "t-019", "state": "THIS IS THE THIRD TIME YOUR UPDATE DELETED MY TEMPLATES. Absolute garbage. I am moving my whole team to another tool.", "labels": {"refund_requested": false, "owner": "technical", "frustration": 2}, "split": "tune"}
+{"id": "t-020", "state": "Is there a discount for non-profits?", "labels": {"refund_requested": false, "owner": "billing", "frustration": 0}}
+{"id": "t-021", "state": "Your API returns 500 on every POST to /events since around 10:00 UTC.", "labels": {"refund_requested": false, "owner": "technical", "frustration": 0}}
+{"id": "t-022", "state": "We need to export all our data before the contract ends, where is that option?", "labels": {"refund_requested": false, "owner": "account", "frustration": 0}}
+{"id": "t-023", "state": "I want my money back. The product is nothing like what the sales demo showed.", "labels": {"refund_requested": true, "owner": "billing", "frustration": 1}}
+{"id": "t-024", "state": "Hello, could you tell me what your office hours are?", "labels": {"refund_requested": false, "owner": "other", "frustration": 0}}
+{"id": "t-025", "state": "Do you have an integration with our accounting software? We are choosing between you and a competitor.", "labels": {"refund_requested": false, "frustration": 0}}
+{"id": "t-026", "state": "I love the new timeline view, thanks to whoever built it!", "labels": {"refund_requested": false, "owner": "other", "frustration": 0}}
+{"id": "t-027", "state": "The invoice for May shows the wrong company address. Please reissue it.", "labels": {"refund_requested": false, "owner": "billing", "frustration": 0}}
+{"id": "t-028", "state": "Two weeks of waiting for an answer about a wrong charge. Either return the $120 today or I file a complaint with my bank.", "labels": {"refund_requested": true, "owner": "billing", "frustration": 2}}
+{"id": "t-029", "state": "Page load takes 20 to 30 seconds for everyone in our Berlin office since Monday.", "labels": {"refund_requested": false, "owner": "technical"}}
+{"id": "t-030", "state": "Please delete my account and all personal data under GDPR.", "labels": {"refund_requested": false, "owner": "account", "frustration": 0}}
+{"id": "t-031", "state": "asdf test test", "labels": {"refund_requested": false, "owner": "other", "frustration": 0}}
+{"id": "t-032", "state": "My manager left the company and she was the only admin. How do we get admin rights back?", "labels": {"refund_requested": false, "owner": "account", "frustration": 0}}
+{"id": "t-033", "state": "You people are thieves. You renewed my plan without any warning.", "labels": {"refund_requested": false, "owner": "billing", "frustration": 2}}
+{"id": "t-034", "state": "Webhook deliveries are delayed by about ten minutes, which breaks our on-call alerts. This is the second time this month.", "labels": {"refund_requested": false, "owner": "technical", "frustration": 1}}
+{"id": "t-035", "state": "Could you send me a receipt for the last payment? My accountant needs it.", "labels": {"refund_requested": false, "owner": "billing", "frustration": 0}}
+{"id": "t-036", "state": "I was promised a refund on the 3rd by your agent Maria and it still has not arrived. Where is it?", "labels": {"refund_requested": true, "owner": "billing", "frustration": 1}}
+{"id": "t-037", "state": "What happens to my files if I let the subscription lapse?", "labels": {"refund_requested": false, "frustration": 0}}
+{"id": "t-038", "state": "I'd like to return the annual plan I bought yesterday, I picked the wrong one. Monthly would suit us better.", "labels": {"refund_requested": true, "owner": "billing", "frustration": 0}}
+{"id": "t-039", "state": "Single sign-on stopped working after we rotated our certificate. Users get error SAML_202.", "labels": {"refund_requested": false, "frustration": 0}}
+{"id": "t-040", "state": "Your latest release broke keyboard shortcuts on Linux. Again. Do you even test on Linux?", "labels": {"refund_requested": false, "owner": "technical", "frustration": 1}}
+{"id": "t-041", "state": "Notifications arrive twice on Android since version 5.1.", "labels": {"refund_requested": false, "owner": "technical", "frustration": 0}}
+{"id": "t-042", "state": "The CSV import fails with 'unexpected delimiter' on a file that worked last month.", "labels": {"refund_requested": false, "owner": "technical", "frustration": 0}}
+{"id": "t-043", "state": "Search returns nothing for any query. Started an hour ago. We cannot work.", "labels": {"refund_requested": false, "owner": "technical", "frustration": 1}}
+{"id": "t-044", "state": "Why is the desktop app using 4 GB of memory with one board open? Ridiculous.", "labels": {"refund_requested": false, "owner": "technical", "frustration": 1}}
+{"id": "t-045", "state": "Please change the email on my account from the old domain to the new one.", "labels": {"refund_requested": false, "owner": "account", "frustration": 0}, "split": "tune"}
+{"id": "t-046", "state": "How do I turn on two-factor authentication for everyone in the workspace?", "labels": {"refund_requested": false, "owner": "account", "frustration": 0}, "split": "tune"}
+{"id": "t-047", "state": "A former employee still has access to our boards. Remove him right now, this is a security problem.", "labels": {"refund_requested": false, "owner": "account", "frustration": 1}}
+{"id": "t-048", "state": "Can I merge two workspaces that I own into one?", "labels": {"refund_requested": false, "owner": "account", "frustration": 0}}
+{"id": "t-049", "state": "I can't log in, it says my account is locked. I have a presentation in an hour!!", "labels": {"refund_requested": false, "owner": "account", "frustration": 1}}
+{"id": "t-050", "state": "We need a guest role that can comment but not edit. Does that exist?", "labels": {"refund_requested": false, "owner": "account", "frustration": 0}}
+{"id": "t-051", "state": "Are you hiring backend engineers? I could not find a careers page.", "labels": {"refund_requested": false, "owner": "other", "frustration": 0}, "split": "tune"}
+{"id": "t-052", "state": "We are a journalist team writing about scheduling tools, who can we talk to for a comment?", "labels": {"refund_requested": false, "owner": "other", "frustration": 0}}
+{"id": "t-053", "state": "Hi", "labels": {"refund_requested": false, "owner": "other", "frustration": 0}}
+{"id": "t-054", "state": "Please remove me from your marketing emails, I never signed up for them.", "labels": {"refund_requested": false, "owner": "other"}}
+{"id": "t-055", "state": "Do you have a roadmap I can look at? Curious about offline mode.", "labels": {"refund_requested": false, "owner": "other", "frustration": 0}}
+{"id": "t-056", "state": "Wrong number, sorry.", "labels": {"refund_requested": false, "owner": "other", "frustration": 0}}
+{"id": "t-057", "state": "Can someone from your team speak at our conference in October?", "labels": {"refund_requested": false, "owner": "other", "frustration": 0}}
+{"id": "t-058", "state": "Is your company based in the EU?", "labels": {"refund_requested": false, "owner": "other", "frustration": 0}}
+{"id": "t-059", "state": "Worst support I have ever dealt with. Five days, zero replies. Cancel everything and refund me NOW.", "labels": {"refund_requested": true, "owner": "billing", "frustration": 2}}
+{"id": "t-060", "state": "Are you kidding me? The outage page says all systems operational while nothing loads. Liars.", "labels": {"refund_requested": false, "owner": "technical", "frustration": 2}, "split": "tune"}
+{"id": "t-061", "state": "Your 'upgrade' wiped our permissions and now interns can see payroll boards. This is unacceptable and I will be talking to our lawyers.", "labels": {"refund_requested": false, "frustration": 2}}
+{"id": "t-062", "state": "I am so tired of this. Every Monday the sync breaks, every Monday I write to you, every Monday you say it's fixed.", "labels": {"refund_requested": false, "owner": "technical", "frustration": 1}}
+{"id": "t-063", "state": "If the invoice is not corrected by Friday we are leaving, and I will make sure our whole network knows why.", "labels": {"refund_requested": false, "owner": "billing", "frustration": 2}}
+{"id": "t-064", "state": "Stop sending me password reset emails I did not request!!! Someone is attacking my account and you do NOTHING.", "labels": {"refund_requested": false, "owner": "account", "frustration": 2}}
+{"id": "t-065", "state": "Three invoices, three mistakes. Is anyone there actually reading what I write? Fix it or lose us.", "labels": {"refund_requested": false, "owner": "billing", "frustration": 2}, "split": "tune"}
+{"id": "t-066", "state": "Congratulations, your 'improved' editor ate two hours of my work. Useless.", "labels": {"refund_requested": false, "owner": "technical", "frustration": 2}, "split": "holdout"}

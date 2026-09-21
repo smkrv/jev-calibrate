@@ -1,0 +1,38 @@
+{
+  "questions": {
+    "refund_requested": {
+      "type": "noul",
+      "instructions": "The customer asks for money to be returned.",
+      "criteria": {
+        "true": "The message asks for a refund, a chargeback, or the reversal of a charge that was already made, in any wording.",
+        "false": "No request to return money: the customer reports a problem, asks a question, complains about a charge without asking for it back, or only wants future billing to stop."
+      }
+    },
+    "owner": {
+      "type": "choice",
+      "instructions": "Which team should handle this message?",
+      "criteria": {
+        "billing": "Charges, invoices, receipts, payment methods, refunds, plan prices and discounts.",
+        "technical": "Bugs, errors, crashes, outages, slow performance, broken integrations or API calls.",
+        "account": "Logging in, passwords, members and their roles, access rights, account data: export, deletion, merging.",
+        "other": "None of the above, or the message does not say enough to tell."
+      }
+    },
+    "frustration": {
+      "type": "score",
+      "instructions": "How frustrated is the customer?",
+      "criteria": [
+        "Neutral or polite, no sign of irritation.",
+        "Irritated: mentions inconvenience, repeated attempts or waiting, or a sarcastic remark.",
+        "Angry: accusations, threats to leave or to escalate, shouting in capital letters, or insults."
+      ]
+    }
+  },
+  "decisions": {
+    "refund_requested": { "threshold": 0.5 }
+  },
+  "settings": {
+    "holdoutFraction": 0.5,
+    "minPerClass": 5
+  }
+}
