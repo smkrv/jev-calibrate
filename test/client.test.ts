@@ -72,6 +72,25 @@ test('overload is retried, a client error is final and never shows the key', asy
   assert.equal(denied, 1);
 });
 
+test('a redirect is refused, so a state reaches only the host that was named', async () => {
+  let calls = 0;
+  let mode: RequestInit['redirect'];
+  const moved: FetchLike = async (_url, init) => {
+    calls += 1;
+    mode = init.redirect;
+    return new Response(null, { status: 307, headers: { location: 'https://elsewhere.example/v1/systemone' } });
+  };
+  await assert.rejects(ask(provider, 's', { q: noul }, moved, noSleep), (error: unknown) => {
+    assert.ok(error instanceof JevError);
+    assert.match(error.message, /HTTP 307/);
+    assert.match(error.message, /elsewhere\.example/);
+    assert.ok(!error.message.includes('secret-key-value'));
+    return true;
+  });
+  assert.equal(calls, 1);
+  assert.equal(mode, 'manual');
+});
+
 test('a network failure is retried and then reported, not turned into an answer', async () => {
   let calls = 0;
   const down: FetchLike = async () => {

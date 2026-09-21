@@ -140,6 +140,8 @@ export async function ask(
         method: 'POST',
         headers: { Authorization: `Bearer ${provider.key}`, 'Content-Type': 'application/json' },
         body,
+        // A followed 307 would send the state again, to a host nobody named.
+        redirect: 'manual',
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
     } catch (error) {
@@ -151,6 +153,10 @@ export async function ask(
       lastError = `HTTP ${response.status}`;
       if (attempt < MAX_ATTEMPTS - 1) await sleep(retryDelayMs(attempt, response.headers.get('retry-after')));
       continue;
+    }
+    if (response.status >= 300 && response.status < 400) {
+      const location = (response.headers.get('location') ?? 'an unnamed address').slice(0, 200);
+      throw new JevError(`HTTP ${response.status}: redirect to ${location} not followed`);
     }
     const text = await response.text();
     if (!response.ok) throw new JevError(`HTTP ${response.status}: ${text.slice(0, 300)}`);
