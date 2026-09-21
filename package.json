@@ -43,7 +43,7 @@
     "classification"
   ],
   "devDependencies": {
-    "@types/node": "^22.20.4",
+    "@types/node": "^26.5.1",
     "typescript": "^7.0.2"
   }
 }
