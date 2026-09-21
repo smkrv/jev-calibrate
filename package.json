@@ -1,6 +1,6 @@
 {
   "name": "jev-calibrate",
-  "version": "0.1.0",
+  "version": "0.1.9",
   "description": "Calibrate Jev questions against your own labels: tune criteria on labelled examples, confirm on a held-out set, and learn whether each question works as a gate, a ranker, or not at all.",
   "license": "MIT",
   "author": "SMKRV",

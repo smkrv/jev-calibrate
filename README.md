@@ -1,6 +1,7 @@
 # jev-calibrate
 
 [![CI](https://github.com/smkrv/jev-calibrate/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/smkrv/jev-calibrate/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/jev-calibrate.svg)](https://www.npmjs.com/package/jev-calibrate)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-20%2B-3fb950.svg)](#install)
 [![Runtime dependencies](https://img.shields.io/badge/runtime%20dependencies-none-3fb950.svg)](package.json)
@@ -51,18 +52,16 @@ Every question ends in one of these verdicts:
 Node 20 or later.
 
 ```sh
-git clone https://github.com/smkrv/jev-calibrate.git
-cd jev-calibrate
-npm install --ignore-scripts
-npm run build
-npm link
+npm install -g jev-calibrate
 ```
 
 Set one key in the environment: `TYPESAFE_API_KEY` or `OPENROUTER_API_KEY`. When both are set, TypeSafe is used unless you pass `--provider openrouter`.
 
-To try it on the bundled example (66 labelled support messages, three questions, under one cent for the whole loop):
+The bundled example (66 labelled support messages, three questions, under one cent for the whole loop) is in the repository; the npm package ships only the built code:
 
 ```sh
+git clone https://github.com/smkrv/jev-calibrate.git
+cd jev-calibrate
 jev-calibrate lint  --dir examples/support-tickets
 jev-calibrate check --dir examples/support-tickets --runs 3
 ```

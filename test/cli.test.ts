@@ -3,7 +3,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
-import { check } from '../src/check.ts';
+import { check, VERSION } from '../src/check.ts';
 import { loadProject } from '../src/project.ts';
 import { ENV, fakeJev, startFakeJevServer, tempProject } from './helpers.ts';
 
@@ -38,10 +38,10 @@ test('no command prints help and fails; --help succeeds', () => {
 test('--version and -v print the version and exit 0 regardless of any command', () => {
   const long = run('--version');
   assert.equal(long.status, 0);
-  assert.match(long.stdout, /^0\.1\.0/);
+  assert.equal(long.stdout.trim(), VERSION);
   const short = run('-v', 'check');
   assert.equal(short.status, 0);
-  assert.match(short.stdout, /^0\.1\.0/);
+  assert.equal(short.stdout.trim(), VERSION);
 });
 
 test('valid --runs and --concurrency values pass validation before the key check runs', () => {
