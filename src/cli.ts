@@ -28,7 +28,7 @@ Options
   --question <id>       check only this question; repeatable
   --provider <name>     typesafe or openrouter (default: whichever key is set, typesafe first)
   --model <id>          model id to request (default: a pinned version for the provider)
-  --base-url <url>      API-compatible server, for the typesafe provider
+  --base-url <url>      a server with the same API as the chosen provider, called instead of it
   --concurrency <n>     parallel requests (default 8)
   --require <verdict>   exit 1 unless every question is at least: gate, gate-above-confidence, or ranker
   --strict              lint: treat warnings as errors
@@ -36,7 +36,8 @@ Options
 
 Keys come from TYPESAFE_API_KEY or OPENROUTER_API_KEY. Example states are sent to that provider.
 
-Exit codes: 0 done, 1 requirement or lint failed, 2 some examples could not be checked or the command failed.`;
+Exit codes: 0 done; 1 lint errors, a verdict below --require, a regression in compare, or no command given;
+2 some examples could not be checked, or the command failed.`;
 
 
 

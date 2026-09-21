@@ -2,6 +2,7 @@ import { ask } from './client.ts';
 import type { FetchLike, Provider } from './client.ts';
 import { sha256 } from './hash.ts';
 import { labelProblem } from './lint.ts';
+import { ProjectError } from './project.ts';
 import type { Answer, Example, Label, Project, Question } from './types.ts';
 
 export type RawExample = {
@@ -53,6 +54,12 @@ export async function runExamples(
   fetchImpl?: FetchLike,
 ): Promise<RawRun> {
   const started = Date.now();
+  // Answers are kept by example id. lint reports a repeated id, but a caller of the library may not have run lint.
+  const ids = new Set<string>();
+  for (const example of examples) {
+    if (ids.has(example.id)) throw new ProjectError(`duplicate example id "${example.id}"; answers are kept by id, so two examples would be merged`);
+    ids.add(example.id);
+  }
   const prepared = examples
     .map((example) => ({ example, questions: questionsFor(project, example, options.only) }))
     .filter((entry) => Object.keys(entry.questions).length > 0);

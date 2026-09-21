@@ -1,5 +1,6 @@
 node_modules/
 dist/
+CODE_REVIEW.md
 **/.jev-calibrate/runs/
 *.log
 

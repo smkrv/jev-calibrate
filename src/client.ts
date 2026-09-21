@@ -108,6 +108,8 @@ export function parseAnswer(question: Question, raw: unknown): Answer {
     return { type: 'choice', choice: raw.choice, probabilities: raw.probabilities, confidence: raw.confidence };
   }
   if (typeof raw.score !== 'number' || !Number.isFinite(raw.score)) throw new JevError('score answer has no score');
+  // A score is a position on the levels. One past either end would reach the report as an error of many levels.
+  if (raw.score < 0 || raw.score > question.criteria.length - 1) throw new JevError('score is outside the offered levels');
   return { type: 'score', score: raw.score, probabilities: raw.probabilities, confidence: raw.confidence };
 }
 
@@ -151,6 +153,8 @@ export async function ask(
     }
     if (response.status === 429 || response.status >= 500) {
       lastError = `HTTP ${response.status}`;
+      // An unread body keeps its connection out of the pool until it is collected.
+      await response.body?.cancel().catch(() => {});
       if (attempt < MAX_ATTEMPTS - 1) await sleep(retryDelayMs(attempt, response.headers.get('retry-after')));
       continue;
     }

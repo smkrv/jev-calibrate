@@ -1,4 +1,5 @@
 import { revisionOf } from './hash.ts';
+import { classesOf } from './lint.ts';
 import { plain } from './plain.ts';
 import {
   accuracy, argmax, auc, averageDistributions, brier, confidentErrors, confusionAt, confusionTable, groupedPairs,
@@ -93,6 +94,11 @@ export type Report = {
 
 const pct = (value: number | undefined): string => (value === undefined ? 'n/a' : value.toFixed(2));
 
+/** A reduce, because Math.max(...rows) fails past about 120 000 arguments, and it would fail after every request is paid for. */
+function mostRuns(rows: { raw: RawExample }[], id: string): number {
+  return rows.reduce((most, { raw }) => Math.max(most, raw.answers[id]?.length ?? 0), 0);
+}
+
 function range(values: number[]): number {
   return values.length === 0 ? 0 : Math.max(...values) - Math.min(...values);
 }
@@ -177,7 +183,7 @@ function reportNoul(
     id, type: 'noul', revision: revisionOf(question, decision), decision, verdict, reason,
     counts: { true: positives.length, false: negatives.length }, noul: detail, outcomes,
   };
-  const runs = Math.max(0, ...rows.map(({ raw }) => raw.answers[id]?.length ?? 0));
+  const runs = mostRuns(rows, id);
   if (runs > 1) result.stability = { runs, maxRange, flips };
   return result;
 }
@@ -238,6 +244,11 @@ function reportClasses(
     if (suggested && suggested.minConfidence !== decision.minConfidence) detail.suggested = suggested;
   }
 
+  const counts: Record<string, number> = Object.create(null);
+  for (const point of points) counts[point.label] = (counts[point.label] ?? 0) + 1;
+  const thin = Object.entries(counts).filter(([, count]) => count < minPerClass);
+  const unlabelled = classesOf(question).filter((name) => counts[name] === undefined);
+
   let verdict: Verdict;
   let reason: string;
   const labelledClasses = new Set(points.map((point) => point.label));
@@ -245,9 +256,9 @@ function reportClasses(
     // A model that always gives the one labelled answer would score 1.00 here.
     verdict = 'too-few-examples';
     reason = `every labelled example is "${[...labelledClasses][0] ?? ''}"; accuracy on a single class says nothing about the question`;
-  } else if (points.length < minPerClass * 2) {
+  } else if (thin.length > 0) {
     verdict = 'too-few-examples';
-    reason = `${points.length} labelled examples; at least ${minPerClass * 2} are needed before the numbers mean much`;
+    reason = `${thin.map(([name, count]) => `${name}: ${count}`).join(', ')}; ${minPerClass} examples of every labelled class are needed before the numbers mean much`;
   } else if ((overall ?? 0) >= targets.accuracy) {
     verdict = 'gate';
     reason = `accuracy ${pct(overall)} reaches the target ${targets.accuracy} on every answer`;
@@ -261,12 +272,13 @@ function reportClasses(
     if (detail.suggested) reason += `; a cutoff of ${detail.suggested.minConfidence} would reach ${pct(detail.suggested.accuracy)} on ${Math.round(detail.suggested.coverage * 100)}%`;
   }
 
-  const counts: Record<string, number> = Object.create(null);
-  for (const point of points) counts[point.label] = (counts[point.label] ?? 0) + 1;
+  if ((verdict === 'gate' || verdict === 'gate-above-confidence') && unlabelled.length > 0) {
+    reason += `; no labelled examples for ${unlabelled.join(', ')}, so answers there are unmeasured`;
+  }
   const result: QuestionReport = {
     id, type: question.type, revision: revisionOf(question, decision), decision, verdict, reason, counts, classes: detail, outcomes,
   };
-  const runs = Math.max(0, ...rows.map(({ raw }) => raw.answers[id]?.length ?? 0));
+  const runs = mostRuns(rows, id);
   if (runs > 1) result.stability = { runs, maxRange, flips };
   return result;
 }

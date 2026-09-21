@@ -45,7 +45,9 @@ Every question ends in one of these verdicts:
 | `gate-above-confidence` | Accuracy reaches the target among answers at or above `minConfidence`, and enough answers clear that bar | Act on confident answers, send the rest to review |
 | `ranker` | Positive examples score above negative ones (AUC reaches the target), but the configured threshold misses the targets | If the report suggests a threshold that reaches them, set it in `decisions` and check again. If none does, sort by the probability and review from the top; do not cut on it |
 | `unusable` | Neither | Rewrite the question or drop it |
-| `too-few-examples` | Fewer labelled examples than `minPerClass` requires | Label more before trusting any number above |
+| `too-few-examples` | A labelled class has fewer examples than `minPerClass`, or only one class is labelled | Label more before trusting any number above |
+
+A verdict on a choice or a score covers the classes you labelled. When an offered option or level has no examples, the reason line names it.
 
 ## Install
 
@@ -207,11 +209,11 @@ jev-calibrate compare [before.json after.json] [--split tune]
 --dir <path>         project directory, default the current one
 --provider <name>    typesafe or openrouter
 --model <id>         model id to request
---base-url <url>     a server with the same API, used with the typesafe provider
+--base-url <url>     a server with the same API as the chosen provider, called instead of it
 --concurrency <n>    parallel requests, default 8
 ```
 
-Exit codes: 0 done; 1 lint errors, a verdict below `--require`, or a regression in `compare`; 2 some examples could not be checked, or the command failed. In CI, `jev-calibrate check --split tune --require gate` fails the build when a question stops being a gate, for instance after a model upgrade. `gate-above-confidence` ranks below `gate`, since part of its answers go to review; require it by name when that is the behaviour you ship.
+Exit codes: 0 done; 1 lint errors, a verdict below `--require`, a regression in `compare`, or no command given; 2 some examples could not be checked, or the command failed. In CI, `jev-calibrate check --split tune --require gate` fails the build when a question stops being a gate, for instance after a model upgrade. `gate-above-confidence` ranks below `gate`, since part of its answers go to review; require it by name when that is the behaviour you ship.
 
 Model versions are pinned by default (`jev-1.13.0` on TypeSafe, `typesafe/jev-1.13` on OpenRouter), because a threshold belongs to a build and an alias can move. The report prints the build that answered. After a change of model, provider or question wording, run the check again; results do not carry over.
 

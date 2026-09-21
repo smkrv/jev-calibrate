@@ -6,7 +6,7 @@ import { check, latestRuns, readReport } from '../src/check.ts';
 import { compareReports, renderComparison } from '../src/compare.ts';
 import { holdoutWarnings, readLedger } from '../src/ledger.ts';
 import { loadProject } from '../src/project.ts';
-import { belowRequirement, renderReport } from '../src/report.ts';
+import { belowRequirement, buildReport, renderReport } from '../src/report.ts';
 import { ENV, fakeJev, tempProject } from './helpers.ts';
 
 const questions = {
@@ -135,6 +135,47 @@ test('compare lists what an edit fixed and what it broke', async () => {
   assert.equal(refund?.after.verdict, 'gate');
   assert.match(renderComparison(comparison), /verdict {4}ranker -> gate/);
   assert.equal(latestRuns(dir, 'holdout'), undefined);
+});
+
+test('a class with fewer examples than minPerClass keeps a choice from a verdict, as it does a noul', async () => {
+  const lopsided = [
+    ...Array.from({ length: 6 }, (_, i) => ({ id: `b-${i}`, state: `refund number ${i}`, labels: { team: 'billing' }, split: 'tune' })),
+    { id: 'o-0', state: 'hello there', labels: { team: 'other' }, split: 'tune' },
+  ];
+  const { project } = loadProject(tempProject(questions, lopsided));
+  const { report } = await check(project, { split: 'tune', runs: 1, env: ENV, fetchImpl: keywordJev(), persist: false });
+  assert.equal(report.questions[0]?.verdict, 'too-few-examples');
+  assert.match(report.questions[0]?.reason ?? '', /other: 1/);
+});
+
+test('a gate on a class question names the offered classes nobody labelled', async () => {
+  const { project } = loadProject(tempProject(questions, examples('tune')));
+  const { report } = await check(project, { split: 'tune', runs: 1, env: ENV, fetchImpl: keywordJev(), persist: false });
+  const reasons = Object.fromEntries(report.questions.map((q) => [q.id, q.reason]));
+  assert.match(reasons.mood ?? '', /no labelled examples for 1/);
+  assert.doesNotMatch(reasons.team ?? '', /no labelled examples/);
+});
+
+test('compare notes two runs that asked a different number of times', async () => {
+  const { project } = loadProject(tempProject(questions, examples('tune')));
+  const once = await check(project, { split: 'tune', runs: 1, env: ENV, fetchImpl: keywordJev(), persist: false });
+  const thrice = await check(project, { split: 'tune', runs: 3, env: ENV, fetchImpl: keywordJev(), persist: false });
+  assert.deepEqual(compareReports(once.report, thrice.report).notes, ['different numbers of runs: 1 and 3']);
+  assert.deepEqual(compareReports(once.report, once.report).notes, []);
+});
+
+test('check refuses duplicate example ids instead of merging their answers', async () => {
+  const twins = [...examples('tune'), { id: 'tune-r1', state: 'another refund', labels: { refund: true }, split: 'tune' }];
+  const { project } = loadProject(tempProject(questions, twins));
+  await assert.rejects(check(project, { split: 'tune', runs: 1, env: ENV, fetchImpl: keywordJev(), persist: false }), /duplicate example id "tune-r1"/);
+});
+
+test('a report over more examples than a call can take arguments still builds', () => {
+  const { project } = loadProject(tempProject({ questions: { refund: questions.questions.refund }, settings: { minPerClass: 2 } }, [{ id: 'seed', state: 's', labels: { refund: true } }]));
+  const many = Array.from({ length: 130_002 }, (_, i) => ({ id: `e-${i}`, state: 's', labels: { refund: i < 2 }, split: 'tune' as const }));
+  const raw = many.map((example, i) => ({ id: example.id, stateHash: 'x', answers: { refund: [{ type: 'noul' as const, noul: i < 2 ? 0.9 : 0.1 }] } }));
+  const report = buildReport(project, many, { examples: raw, requests: raw.length, models: ['m'], seconds: 1 }, { version: 'x', split: 'tune', runs: 1, provider: 'typesafe', model: 'm', warnings: [] });
+  assert.equal(report.questions[0]?.verdict, 'gate');
 });
 
 test('a question labelled with a single class cannot earn a verdict', async () => {

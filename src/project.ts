@@ -230,7 +230,10 @@ export function loadProject(dir: string): { project: Project; issues: Issue[] } 
       issues.push({ level: 'error', code: 'decision-shape', message: '"decisions" must be an object', where: QUESTIONS_FILE });
     } else {
       for (const [id, raw] of Object.entries(rawQuestions.decisions)) {
-        if (!isSafeKey(id)) continue;
+        if (!isSafeKey(id)) {
+          issues.push({ level: 'error', code: 'decision-shape', message: `"${id}" is a reserved name and cannot be a question id`, where: `${QUESTIONS_FILE}: decisions` });
+          continue;
+        }
         const decision = parseDecision(id, raw, issues);
         if (decision) decisions[id] = decision;
       }

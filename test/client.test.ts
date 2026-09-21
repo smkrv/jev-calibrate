@@ -115,6 +115,26 @@ test('an answer is accepted only when it fits its question', () => {
   assert.deepEqual(parsed, { type: 'choice', choice: 'a', probabilities: { a: 0.8, other: 0.2 }, confidence: 0.7 });
 });
 
+test('a score outside the offered levels is refused', () => {
+  const score: Question = { type: 'score', instructions: 'x', criteria: ['low', 'high'] };
+  const answer = (value: number): unknown => ({ type: 'score', score: value, probabilities: { 0: 0.9, 1: 0.1 }, confidence: 0.8 });
+  assert.deepEqual(parseAnswer(score, answer(1)), { type: 'score', score: 1, probabilities: { 0: 0.9, 1: 0.1 }, confidence: 0.8 });
+  assert.throws(() => parseAnswer(score, answer(999)), /outside the offered levels/);
+  assert.throws(() => parseAnswer(score, answer(-0.5)), /outside the offered levels/);
+});
+
+test('the body of an answer that gets retried is released before the next attempt', async () => {
+  let calls = 0;
+  let released = 0;
+  const busy: FetchLike = async () => {
+    calls += 1;
+    if (calls > 2) return ok({ q: { type: 'noul', noul: 0.1 } });
+    return new Response(new ReadableStream({ cancel() { released += 1; } }), { status: 503 });
+  };
+  await ask(provider, 's', { q: noul }, busy, noSleep);
+  assert.equal(released, 2);
+});
+
 test('a missing or malformed answer fails its own question and leaves the others usable', async () => {
   const partial: FetchLike = async () => ok({ good: { type: 'noul', noul: 0.3 }, __proto__: { type: 'noul', noul: 1 } });
   const result = await ask(provider, 's', { good: noul, missing: noul }, partial, noSleep);

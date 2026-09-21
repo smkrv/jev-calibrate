@@ -22,6 +22,8 @@ function keyMetrics(q: QuestionReport): Record<string, number | undefined> {
 export function compareReports(before: Report, after: Report): Comparison {
   const notes: string[] = [];
   if (before.split !== after.split) notes.push(`different splits: ${before.split} and ${after.split}`);
+  // One answer against a mean of several: "fixed" and "regressed" would compare different quantities.
+  if (before.runs !== after.runs) notes.push(`different numbers of runs: ${before.runs} and ${after.runs}`);
   if (before.modelsAnswered.join() !== after.modelsAnswered.join()) {
     notes.push(`different model builds: ${before.modelsAnswered.join(', ')} and ${after.modelsAnswered.join(', ')}`);
   }

@@ -33,6 +33,8 @@ test('no command prints help and fails; --help succeeds', () => {
   const help = run('--help');
   assert.equal(help.status, 0);
   assert.match(help.stdout, /jev-calibrate check/);
+  assert.match(help.stdout, /or no command given/);
+  assert.match(help.stdout, /--base-url <url> +a server with the same API as the chosen provider/);
 });
 
 test('--version and -v print the version and exit 0 regardless of any command', () => {

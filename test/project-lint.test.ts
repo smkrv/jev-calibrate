@@ -170,6 +170,15 @@ test('inherited Object.prototype names are refused as well', () => {
   assert.equal(issues.filter((issue) => /reserved/.test(issue.message)).length, 3);
 });
 
+test('a decision under a reserved name is reported, the way a question is', () => {
+  const dir = tempProject(
+    { questions: { q: noul }, decisions: { constructor: { threshold: 0.4 }, toString: { threshold: 0.4 } } },
+    [{ id: '1', state: 'one', labels: { q: true } }],
+  );
+  const { issues } = loadProject(dir);
+  assert.equal(issues.filter((issue) => issue.code === 'decision-shape' && /reserved/.test(issue.message)).length, 2);
+});
+
 test('labels must match the question type', () => {
   const dir = tempProject(
     { questions: { q: noul, c: { type: 'choice', instructions: 'x', criteria: { a: 'A', other: 'rest' } }, s: { type: 'score', instructions: 'x', criteria: ['low', 'high'] } } },
