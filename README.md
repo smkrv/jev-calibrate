@@ -1,5 +1,11 @@
 # jev-calibrate
 
+[![CI](https://github.com/smkrv/jev-calibrate/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/smkrv/jev-calibrate/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-20%2B-3fb950.svg)](#install)
+[![Runtime dependencies](https://img.shields.io/badge/runtime%20dependencies-none-3fb950.svg)](package.json)
+[![TypeScript](https://img.shields.io/badge/TypeScript-erasable-3178c6.svg)](src)
+
 Calibrate Jev questions against your own labels.
 
 A Jev question can look right on the inputs you tried by hand and still fail on labelled data. On the example shipped in this repository the first draft of a `frustration` question got 18 of 26 labelled messages right, and four of its eight wrong answers came with a confidence of 0.94 or more. `jev-calibrate` is the loop that finds that out: you write the questions, label a set of examples, and it tells you for each question whether its answers can drive a decision on their own, can only be used to sort, or carry no usable signal.
@@ -249,6 +255,10 @@ npm test
 node src/cli.ts lint --dir examples/support-tickets
 ```
 
+## Security
+
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
+
 ## License
 
-MIT
+[MIT](LICENSE), copyright (c) 2026 SMKRV.

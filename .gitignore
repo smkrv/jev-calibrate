@@ -1,7 +1,43 @@
 node_modules/
 dist/
 **/.jev-calibrate/runs/
+*.log
+
+# AI assistant instructions and local agent state
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+GEMINI.md
+.claude/
+.cursor/
+.cursorrules
+.windsurfrules
+
+# secrets and keys
 .env
 .env.*
-*.log
+*.pem
+*.key
+*.p12
+*.pfx
+*.secret
+*.keystore
+*.jks
+credentials.json
+service-account*.json
+token.json
+.netrc
+
+# OS and editor files
 .DS_Store
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+.fseventsd
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
