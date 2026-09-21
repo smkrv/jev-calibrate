@@ -218,11 +218,13 @@ Model versions are pinned by default (`jev-1.13.0` on TypeSafe, `typesafe/jev-1.
 
 ## Keys and data
 
-Keys are read from the environment and sent only in the `Authorization` header. They are not printed and not written to disk. Example states are sent to the provider you chose, so label data you are allowed to send there. Run files hold ids, hashes and answers, never the example text.
+Keys are read from the environment and sent only in the `Authorization` header. They are not printed and not written to disk. Example states are sent to the provider you chose, so label data you are allowed to send there. A redirect is not followed: the request fails instead of going to another host. Run files hold ids, hashes and answers, never the example text.
 
 `--base-url` and `TYPESAFE_BASE_URL` send both the states and the key to the host you name. They are read from your command line and your environment only, never from the project files, and a plain `http://` address other than this machine gets a warning in the report.
 
 A project directory is treated as data from someone else: `state_file` cannot leave the directory, symlinks included; ids and option names that would reach `Object.prototype` are rejected; control characters are stripped from everything printed. Before the first request `check` prints how many requests it is about to make.
+
+A report that breaks one of these guarantees goes through [SECURITY.md](SECURITY.md).
 
 ## As a library
 
@@ -255,9 +257,7 @@ npm test
 node src/cli.ts lint --dir examples/support-tickets
 ```
 
-## Security
-
-To report a vulnerability, see [SECURITY.md](SECURITY.md).
+Pull request rules and the version scheme are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

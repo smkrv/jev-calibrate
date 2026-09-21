@@ -10,6 +10,10 @@ updates:
       prefix: chore
     labels:
       - dependencies
+    ignore:
+      # the types follow the oldest Node the sources run on, so a newer API fails the type check
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       dev-dependencies:
         dependency-type: development
