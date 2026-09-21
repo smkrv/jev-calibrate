@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { lintProject } from '../src/lint.ts';
@@ -35,12 +35,86 @@ test('bad lines are reported with their line number and do not hide good ones', 
 
 test('question shapes are validated', () => {
   const dir = tempProject(
-    { questions: { a: { type: 'choice', instructions: 'x', criteria: { only: 'one' } }, b: { type: 'score', instructions: 'x', criteria: ['one'] }, c: { type: 'guess', instructions: 'x' }, d: { type: 'noul', instructions: ' ' } } },
+    {
+      questions: {
+        a: { type: 'choice', instructions: 'x', criteria: { only: 'one' } },
+        b: { type: 'score', instructions: 'x', criteria: ['one'] },
+        c: { type: 'guess', instructions: 'x' },
+        d: { type: 'noul', instructions: ' ' },
+        e: { type: 'noul', instructions: 'x', criteria: { true: 'a' } },
+        f: { type: 'noul', instructions: 'x', criteria: 'not an object' },
+      },
+    },
     [{ id: '1', state: 's', labels: { a: 'only' } }],
   );
   const { project, issues } = loadProject(dir);
   assert.equal(Object.keys(project.questions).length, 0);
-  assert.equal(issues.filter((issue) => issue.code === 'question-shape').length, 4);
+  const shapeIssues = issues.filter((issue) => issue.code === 'question-shape');
+  assert.equal(shapeIssues.length, 6);
+  assert.equal(shapeIssues.filter((issue) => /noul "criteria" must be an object/.test(issue.message)).length, 2);
+});
+
+test('decision shapes are validated', () => {
+  const dir = tempProject(
+    { questions: { q: noul }, decisions: { q: { threshold: 1.5, minConfidence: -0.2 }, bogus: 'not an object' } },
+    [{ id: '1', state: 'one', labels: { q: true } }],
+  );
+  const { project, issues } = loadProject(dir);
+  assert.deepEqual(project.decisions.q, {});
+  assert.equal(Object.hasOwn(project.decisions, 'bogus'), false);
+  const shapeIssues = issues.filter((issue) => issue.code === 'decision-shape');
+  assert.equal(shapeIssues.length, 3);
+  assert.ok(shapeIssues.some((issue) => /"threshold" must be a number from 0 to 1/.test(issue.message)));
+  assert.ok(shapeIssues.some((issue) => /"minConfidence" must be a number from 0 to 1/.test(issue.message)));
+  assert.ok(shapeIssues.some((issue) => /a decision must be an object/.test(issue.message)));
+});
+
+test('settings sub-fields are validated one by one, each falling back to its default', () => {
+  const dir = tempProject(
+    { questions: { q: noul }, settings: { model: '', holdoutFraction: 1, minPerClass: 0 } },
+    [{ id: '1', state: 'one', labels: { q: true } }],
+  );
+  const { project, issues } = loadProject(dir);
+  const shapeIssues = issues.filter((issue) => issue.code === 'settings-shape');
+  assert.equal(shapeIssues.length, 3);
+  assert.ok(shapeIssues.some((issue) => /"model" must be a non-empty string/.test(issue.message)));
+  assert.ok(shapeIssues.some((issue) => /"holdoutFraction" must be a number between 0 and 1/.test(issue.message)));
+  assert.ok(shapeIssues.some((issue) => /"minPerClass" must be a positive integer/.test(issue.message)));
+  assert.equal(project.settings.model, undefined);
+  assert.equal(project.settings.holdoutFraction, 0.5);
+  assert.equal(project.settings.minPerClass, 5);
+});
+
+test('a non-object settings value is refused and defaults are kept', () => {
+  const dir = tempProject({ questions: { q: noul }, settings: 'not an object' }, [{ id: '1', state: 'one', labels: { q: true } }]);
+  const { project, issues } = loadProject(dir);
+  const shapeIssues = issues.filter((issue) => issue.code === 'settings-shape');
+  assert.deepEqual(shapeIssues.map((issue) => issue.message), ['"settings" must be an object']);
+  assert.equal(project.settings.holdoutFraction, 0.5);
+  assert.equal(project.settings.minPerClass, 5);
+});
+
+test('an example needs at least one label, and a label must be a boolean, string or number', () => {
+  const dir = tempProject({ questions: { q: noul } }, []);
+  const lines = [
+    '{"id":"empty","state":"x","labels":{}}',
+    '{"id":"array-label","state":"x","labels":{"q":[1,2]}}',
+    '{"id":"object-label","state":"x","labels":{"q":{}}}',
+    '{"id":"null-label","state":"x","labels":{"q":null}}',
+  ];
+  writeFileSync(path.join(dir, 'examples.jsonl'), lines.join('\n'));
+  const { project, issues } = loadProject(dir);
+  assert.equal(project.examples.length, 0);
+  const shapeIssues = issues.filter((issue) => issue.code === 'example-shape');
+  assert.equal(shapeIssues.length, 4);
+  assert.match(shapeIssues[0]?.message ?? '', /must map at least one question id/);
+  assert.ok(shapeIssues.slice(1).every((issue) => /must be a boolean, a string or a number/.test(issue.message)));
+});
+
+test('a missing examples.jsonl throws instead of treating the project as empty', () => {
+  const dir = tempProject({ questions: { q: noul } }, []);
+  unlinkSync(path.join(dir, 'examples.jsonl'));
+  assert.throws(() => loadProject(dir), /cannot read .*examples\.jsonl/);
 });
 
 test('state_file is read from inside the project and refused outside it, symlinks included', () => {

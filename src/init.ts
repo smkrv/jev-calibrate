@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { EXAMPLES_FILE, QUESTIONS_FILE } from './project.ts';
+import { EXAMPLES_FILE, ProjectError, QUESTIONS_FILE } from './project.ts';
 
 const QUESTIONS = {
   questions: {
@@ -33,20 +33,24 @@ const EXAMPLES = [
 
 /** Never overwrites: an existing file is somebody's work. */
 export function init(dir: string): { written: string[]; skipped: string[] } {
-  mkdirSync(dir, { recursive: true });
   const written: string[] = [];
   const skipped: string[] = [];
   const files: [string, string][] = [
     [QUESTIONS_FILE, `${JSON.stringify(QUESTIONS, null, 2)}\n`],
     [EXAMPLES_FILE, EXAMPLES.map((example) => `${JSON.stringify(example)}\n`).join('')],
   ];
-  for (const [name, content] of files) {
-    const target = path.join(dir, name);
-    if (existsSync(target)) skipped.push(name);
-    else {
-      writeFileSync(target, content, { encoding: 'utf8', flag: 'wx' });
-      written.push(name);
+  try {
+    mkdirSync(dir, { recursive: true });
+    for (const [name, content] of files) {
+      const target = path.join(dir, name);
+      if (existsSync(target)) skipped.push(name);
+      else {
+        writeFileSync(target, content, { encoding: 'utf8', flag: 'wx' });
+        written.push(name);
+      }
     }
+  } catch (error) {
+    throw new ProjectError(`cannot write into ${dir}: ${error instanceof Error ? error.message : String(error)}`);
   }
   return { written, skipped };
 }

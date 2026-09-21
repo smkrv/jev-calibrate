@@ -1,4 +1,5 @@
 import { mkdtempSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { FetchLike } from '../src/client.ts';
@@ -24,3 +25,26 @@ export function fakeJev(answer: (state: string, id: string, question: Question) 
 }
 
 export const ENV = { TYPESAFE_API_KEY: 'test-key-never-sent-anywhere' };
+
+/** The same stand-in over HTTP on 127.0.0.1, for tests that run the CLI as a subprocess and so cannot pass a FetchLike. */
+export async function startFakeJevServer(
+  answer: (state: string, id: string, question: Question) => unknown,
+): Promise<{ url: string; close: () => Promise<void> }> {
+  const server = createServer((request, response) => {
+    const chunks: Buffer[] = [];
+    request.on('data', (chunk: Buffer) => chunks.push(chunk));
+    request.on('end', () => {
+      const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as { state: string; questions: Record<string, Question> };
+      const answers = Object.fromEntries(Object.entries(body.questions).map(([id, question]) => [id, answer(body.state, id, question)]));
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify({ model: 'fake-http-build', answers, usage: { input_tokens: 50 } }));
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const address = server.address();
+  const port = typeof address === 'object' && address !== null ? address.port : 0;
+  return {
+    url: `http://127.0.0.1:${port}`,
+    close: () => new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve()))),
+  };
+}

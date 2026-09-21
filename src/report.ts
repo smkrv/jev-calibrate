@@ -6,7 +6,7 @@ import {
 } from './metrics.ts';
 import type { ClassPoint, Confusion, NoulPoint, ReliabilityBin, SelectiveRow } from './metrics.ts';
 import type { RawExample, RawRun } from './run.ts';
-import type { Answer, Decision, Example, Label, Project, Question, Split } from './types.ts';
+import type { ChoiceAnswer, Decision, Example, Label, Project, Question, ScoreAnswer, Split } from './types.ts';
 
 export type Verdict = 'gate' | 'gate-above-confidence' | 'ranker' | 'unusable' | 'too-few-examples';
 
@@ -97,10 +97,8 @@ function range(values: number[]): number {
   return values.length === 0 ? 0 : Math.max(...values) - Math.min(...values);
 }
 
-function levelOf(answer: Answer): string | undefined {
-  if (answer.type === 'choice') return answer.choice;
-  if (answer.type === 'score') return argmax(answer.probabilities);
-  return undefined;
+function levelOf(answer: ChoiceAnswer | ScoreAnswer): string | undefined {
+  return answer.type === 'choice' ? answer.choice : argmax(answer.probabilities);
 }
 
 function reportNoul(

@@ -32,6 +32,7 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"test/**/*.test.ts\"",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-exclude=\"test/**\" --test-coverage-lines=97 --test-coverage-branches=84 --test-coverage-functions=93 \"test/**/*.test.ts\"",
     "prepublishOnly": "npm run typecheck && npm test && npm run build"
   },
   "keywords": [

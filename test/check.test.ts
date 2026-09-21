@@ -215,6 +215,102 @@ test('a partial gate does not satisfy --require gate', () => {
   assert.deepEqual(belowRequirement(report, 'ranker'), ['thin']);
 });
 
+test('a plain http endpoint on a non-local host earns a warning, and localhost does not', async () => {
+  const { project } = loadProject(tempProject(questions, examples('tune')));
+  const remote = await check(project, { split: 'tune', runs: 1, only: ['refund'], env: ENV, baseUrl: 'http://example.com', fetchImpl: keywordJev(), persist: false });
+  assert.match(remote.report.warnings.join(' '), /sent without encryption to example\.com/);
+  const local = await check(project, { split: 'tune', runs: 1, only: ['refund'], env: ENV, baseUrl: 'http://127.0.0.1:9999', fetchImpl: keywordJev(), persist: false });
+  assert.deepEqual(local.report.warnings, []);
+});
+
+test('two runs written in the same millisecond both survive under different names', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'] });
+  t.mock.timers.setTime(1_700_000_000_000);
+  const { project } = loadProject(tempProject(questions, examples('tune')));
+  const first = await check(project, { split: 'tune', runs: 1, only: ['refund'], env: ENV, fetchImpl: keywordJev() });
+  const second = await check(project, { split: 'tune', runs: 1, only: ['refund'], env: ENV, fetchImpl: keywordJev() });
+  assert.ok(first.runFile && second.runFile);
+  assert.notEqual(first.runFile, second.runFile);
+  const runsDir = path.dirname(first.runFile as string);
+  const files = readdirSync(runsDir).filter((name) => name.endsWith('-tune.json'));
+  assert.equal(files.length, 2);
+  assert.deepEqual(readReport(first.runFile as string).questions[0]?.id, 'refund');
+  assert.deepEqual(readReport(second.runFile as string).questions[0]?.id, 'refund');
+});
+
+test('latestRuns returns undefined for a project that was never checked', () => {
+  const dir = tempProject(questions, []);
+  assert.equal(latestRuns(dir, 'tune'), undefined);
+});
+
+test('a class question above a confidence cutoff can gate even when overall accuracy misses the target', async () => {
+  const teamQuestions = {
+    questions: { team: { type: 'choice', instructions: 'Which team?', criteria: { billing: 'Money.', other: 'Rest.' } } },
+    decisions: { team: { minConfidence: 0.9 } },
+    settings: { minPerClass: 2 },
+  };
+  const teamExamples = [
+    { id: 'c1', state: 'ticket ALPHA billing', labels: { team: 'billing' }, split: 'tune' },
+    { id: 'c2', state: 'ticket BETA other', labels: { team: 'other' }, split: 'tune' },
+    { id: 'c3', state: 'ticket GAMMA billing', labels: { team: 'billing' }, split: 'tune' },
+    { id: 'c4', state: 'ticket DELTA other flagged', labels: { team: 'other' }, split: 'tune' },
+  ];
+  const fetchImpl = fakeJev((state) => {
+    if (state.includes('ALPHA') || state.includes('GAMMA')) return { type: 'choice', choice: 'billing', probabilities: { billing: 0.95, other: 0.05 }, confidence: 0.95 };
+    if (state.includes('BETA')) return { type: 'choice', choice: 'other', probabilities: { billing: 0.05, other: 0.95 }, confidence: 0.95 };
+    return { type: 'choice', choice: 'billing', probabilities: { billing: 0.65, other: 0.35 }, confidence: 0.35 };
+  });
+  const { project } = loadProject(tempProject(teamQuestions, teamExamples));
+  const { report } = await check(project, { split: 'tune', runs: 1, env: ENV, fetchImpl, persist: false });
+  const team = report.questions[0];
+  assert.equal(team?.classes?.accuracy, 0.75);
+  assert.equal(team?.verdict, 'gate-above-confidence');
+  assert.match(team?.reason ?? '', /accuracy 1\.00 on the 75% of answers with confidence of at least 0\.9/);
+});
+
+test('a class question below every cutoff is unusable, and a better cutoff is suggested', async () => {
+  const teamQuestions = {
+    questions: { team: { type: 'choice', instructions: 'Which team?', criteria: { billing: 'Money.', other: 'Rest.' } } },
+    decisions: { team: { minConfidence: 0.3 } },
+    settings: { minPerClass: 2 },
+  };
+  const teamExamples = [
+    { id: 'c1', state: 'ticket ALPHA billing', labels: { team: 'billing' }, split: 'tune' },
+    { id: 'c2', state: 'ticket BETA other', labels: { team: 'other' }, split: 'tune' },
+    { id: 'c3', state: 'ticket GAMMA billing', labels: { team: 'billing' }, split: 'tune' },
+    { id: 'c4', state: 'ticket DELTA other flagged', labels: { team: 'other' }, split: 'tune' },
+  ];
+  const fetchImpl = fakeJev((state) => {
+    if (state.includes('ALPHA') || state.includes('GAMMA')) return { type: 'choice', choice: 'billing', probabilities: { billing: 0.95, other: 0.05 }, confidence: 0.95 };
+    if (state.includes('BETA')) return { type: 'choice', choice: 'other', probabilities: { billing: 0.05, other: 0.95 }, confidence: 0.95 };
+    return { type: 'choice', choice: 'billing', probabilities: { billing: 0.65, other: 0.35 }, confidence: 0.35 };
+  });
+  const { project } = loadProject(tempProject(teamQuestions, teamExamples));
+  const { report } = await check(project, { split: 'tune', runs: 1, env: ENV, fetchImpl, persist: false });
+  const team = report.questions[0];
+  assert.equal(team?.verdict, 'unusable');
+  assert.equal(team?.classes?.at?.coverage, 1);
+  assert.match(team?.reason ?? '', /above confidence 0\.3 it is 0\.75 on 100% of answers/);
+  assert.match(team?.reason ?? '', /a cutoff of 0\.5 would reach 1\.00 on 75%/);
+});
+
+test('compare notes a different model build and a question only seen in the later run', async () => {
+  const compareQuestions = { questions: { refund: { type: 'noul', instructions: 'x', criteria: { true: 'a', false: 'b' } } }, settings: { minPerClass: 1 } };
+  const compareExamples = [
+    { id: 'p1', state: 'refund POS', labels: { refund: true }, split: 'tune' },
+    { id: 'n1', state: 'refund NEG', labels: { refund: false }, split: 'tune' },
+  ];
+  const { project } = loadProject(tempProject(compareQuestions, compareExamples));
+  const fetchImpl = fakeJev((state) => ({ type: 'noul', noul: state.includes('POS') ? 0.9 : 0.1 }));
+  const { report: before } = await check(project, { split: 'tune', runs: 1, env: ENV, fetchImpl, persist: false });
+  const ghost = { ...before.questions[0]!, id: 'ghost-question' };
+  const after = { ...before, modelsAnswered: ['a-different-build'], questions: [...before.questions, ghost] };
+  const comparison = compareReports(before, after);
+  assert.ok(comparison.notes.some((note) => /different model builds: fake-build and a-different-build/.test(note)));
+  assert.ok(comparison.notes.includes('ghost-question: only in the later run'));
+  assert.equal(comparison.questions.some((q) => q.id === 'ghost-question'), false);
+});
+
 test('an error body from the server cannot add lines to the report', async () => {
   const { project } = loadProject(tempProject(questions, examples('tune')));
   const base = keywordJev();
