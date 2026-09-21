@@ -1,8 +1,10 @@
 # jev-calibrate
 
-Calibrate Jev questions against your own labels. You write the questions, label a set of examples, and `jev-calibrate` tells you for each question whether its answers can drive a decision on their own, can only be used to sort, or carry no usable signal.
+Calibrate Jev questions against your own labels.
 
-Jev is the typed-decision model from TypeSafe: it takes a `state` and a set of questions (`noul`, `choice`, `score`) and returns probabilities instead of text. How well a question works depends on its wording, on your data and on the threshold you cut at, and none of the three can be read off a single good-looking answer. This tool measures them.
+A Jev question can look right on the inputs you tried by hand and still fail on labelled data. On the example shipped in this repository the first draft of a `frustration` question got 18 of 26 labelled messages right, and four of its eight wrong answers came with a confidence of 0.94 or more. `jev-calibrate` is the loop that finds that out: you write the questions, label a set of examples, and it tells you for each question whether its answers can drive a decision on their own, can only be used to sort, or carry no usable signal.
+
+Jev is the typed-decision model from TypeSafe: it takes a `state` and a set of questions (`noul`, `choice`, `score`) and returns probabilities instead of text. How well a question works depends on its wording, on your data and on the threshold you cut at, and none of the three can be read off a single good-looking answer.
 
 Unofficial and not affiliated with TypeSafe. Written in TypeScript, no runtime dependencies. It talks to the TypeSafe API, to OpenRouter, or to any server that implements the same request format.
 
@@ -109,15 +111,15 @@ jev-calibrate check --dir examples/support-tickets --runs 3
 
 - `labels` maps a question id to the expected answer: `true` or `false` for noul, an option key for choice, a zero-based level index for score (the same numbering as the `legend` in the API response). A question missing from `labels` is not asked for that example. Leave arguable cases unlabelled: a narrow question is measured on the examples where you are sure of the answer.
 - `group` ties together examples that differ only in the property you label, such as a message with and without the refund request. Inside a group every `true` example should score above every `false` one, and the report counts how often it does. Grouped examples always land in the same split.
-- `split` forces `"tune"` or `"holdout"`. Without it the split comes from a hash of the group or the id, so an example keeps its place on every machine and when other examples are added. With a small set the halves can come out uneven; `lint` tells you which class is thin, and `split` is how you fix it.
+- `split` forces `"tune"` or `"holdout"`. Without it the split comes from a hash of the group or the id, so an example keeps its place on every machine and when other examples are added. The price is balance: on the first 64 bundled examples the hash put 23 in tune and 41 in holdout, and three classes came out too thin to check. `lint` names the thin classes; seven examples in the bundled file carry an explicit `split` for that reason.
 - `state_file` instead of `state` reads the text from a file inside the project directory.
 
 ## The procedure
 
-1. `jev-calibrate lint`. No API calls. Fix the errors, read the warnings.
-2. `jev-calibrate check`. Judges the tune half and lists the misses.
-3. Read the misses and edit `criteria`. Keep `instructions` fixed: it names the property, `criteria` draws its border. Describe the situation; do not paste examples into the question. If the border is right and only the cut is off, take the suggested threshold into `decisions`.
-4. `jev-calibrate check` again, then `jev-calibrate compare`. It shows what the edit fixed and what it broke, and exits with 1 when anything regressed.
+1. Run `jev-calibrate lint` until it reports no errors. It makes no API calls, so this step is free.
+2. `jev-calibrate check` judges the tune half and lists the misses.
+3. Read the misses and edit `criteria` only. With `instructions` left alone, two runs differ in one thing and `compare` can tell you what that thing did. Describe the situation; do not paste examples into the question. If the misses are in the right order and wrong only at the threshold, take the suggested threshold into `decisions` instead.
+4. Check again and run `jev-calibrate compare`, which shows what the edit fixed and what it broke. It exits with 1 when anything regressed.
 5. When the tune half looks right, stop editing and run `jev-calibrate check --split holdout`. That number is the one to report.
 
 On the bundled example the first draft of the questions had one-word criteria (`"billing": "Billing"`, levels `"Low"`, `"Medium"`, `"High"`). Tune results before and after describing each option and level:
@@ -137,7 +139,9 @@ frustration  73cb21452a27 -> 62c3811812e4
   regressed  none
 ```
 
-In the draft, four of the eight wrong `frustration` answers came with confidence of 0.94 or more, so a confidence cutoff would not have caught them. The holdout half, judged once after the edit: `refund_requested` AUC 1.00 with no false positives in 30, `owner` 1.00, `frustration` 0.97. This example is an easy one and the labels are the author's; treat it as a demonstration of the loop, not as a statement about the model.
+A confidence cutoff would not have rescued the draft. At a cutoff of 0.9 it still scored 0.76, because four of the eight misses came with a confidence of 0.94 or more.
+
+The holdout half, judged once after the edit: `refund_requested` AUC 1.00 with no false positives in 30, `owner` 1.00, `frustration` 0.97. The example is an easy one, and the labels come from the same person who wrote the questions.
 
 ## The holdout keeps a record
 
@@ -149,13 +153,11 @@ When you run the holdout again with a different revision, the report says how ma
 warning: refund_requested: 37 of 37 holdout examples already judged 1 earlier revision. They have informed a change, so the numbers on them are optimistic. Fresh examples: 0.
 ```
 
-The remedy is new labelled examples. There is no flag that silences the warning, and `--split all` is no way around it: the held-out examples it judges are recorded as well. Commit the ledger; run files under `.jev-calibrate/runs/` are local and hold ids, hashes and answers, never the example text.
+The remedy is new labelled examples. There is no flag that silences the warning, and `--split all` is no way around it: the held-out examples it judges are recorded as well. The holdout report also never suggests a threshold or a confidence cutoff. Both are tuning, and they belong to the tune half.
 
-The record is keyed by the example id together with its text, so renaming an example or editing its state makes it count as fresh again.
+Commit the ledger. Run files under `.jev-calibrate/runs/` stay local.
 
-The ledger stores a 10-character hash of each example's id and state. That does not reveal the text, but anyone who has the ledger can confirm a guess about a short or enumerable state, so keep it private when the states are.
-
-The holdout report never suggests a threshold or a confidence cutoff. Both are tuning, and they belong to the tune half.
+Two limits of the record. It is keyed by the example id together with its text, so renaming an example or editing its state makes it count as fresh again. And each entry is a 10-character hash of that id and text: it does not reveal the text, but anyone who has the ledger can confirm a guess about a short or enumerable state, so keep the ledger private when the states are.
 
 ## Repeated runs
 
@@ -183,9 +185,11 @@ An example is averaged over all of its runs or not at all: a request that fails 
 
 - A noul answer counts as yes at or above `threshold`. Precision, recall and false positives are taken at that threshold. AUC is the probability that a `true` example scores above a `false` one, ties counting half, so it needs no threshold.
 - The suggested threshold is the midpoint between two observed values that gives the highest recall while precision meets its target. When no threshold meets it, the suggestion is the one with the best balance of hits and false alarms.
-- For choice and score the predicted answer is the most probable option or level after averaging the distributions over runs. Score also reports accuracy within one level and the mean distance between the returned score and the labelled level.
-- The Brier score and a five-bin reliability table (in the JSON report) show whether a probability of 0.8 comes true about 80% of the time. They need far more examples than a verdict does.
-- An example whose request failed is reported as not checked and left out of every metric. When a single answer in a response is missing or malformed, only that question loses the example. Neither case is ever counted as a wrong or a negative answer. The command then exits with 2.
+- For choice and score the predicted answer is the most probable option or level after averaging the distributions over runs.
+- Score also reports accuracy within one level and the mean distance between the returned score and the labelled level. A miss by one level and a miss by two are different problems, and plain accuracy hides which one you have.
+- The JSON report carries the Brier score and a five-bin reliability table: does a probability of 0.8 come true about 80% of the time? Both need far more examples than a verdict does.
+
+A failed request is never turned into an answer. The example is reported as not checked and left out of every metric; when a single answer in a response is missing or malformed, only that question loses the example. The command then exits with 2.
 
 ## Commands and options
 
@@ -208,7 +212,7 @@ Model versions are pinned by default (`jev-1.13.0` on TypeSafe, `typesafe/jev-1.
 
 ## Keys and data
 
-Keys are read from the environment and sent only in the `Authorization` header. They are not printed and not written to disk. Example states are sent to the provider you chose, so label data you are allowed to send there. Run files contain ids, hashes and answers.
+Keys are read from the environment and sent only in the `Authorization` header. They are not printed and not written to disk. Example states are sent to the provider you chose, so label data you are allowed to send there. Run files hold ids, hashes and answers, never the example text.
 
 `--base-url` and `TYPESAFE_BASE_URL` send both the states and the key to the host you name. They are read from your command line and your environment only, never from the project files, and a plain `http://` address other than this machine gets a warning in the report.
 
@@ -229,8 +233,8 @@ console.log(renderReport(report));
 
 ## Limits
 
-- A verdict is only as good as the labels. Twenty examples per class tell you whether a question is hopeless; they do not give you a precision figure to promise anyone.
-- The tool measures questions in isolation. Whether the whole task got faster or cheaper is a separate measurement on your side.
+- Small sets give wide margins. Twenty correct answers out of twenty still leave room for a true precision of 0.86 (one-sided 95% bound), so twenty examples per class can tell you that a question is hopeless and cannot give you a figure to promise anyone.
+- It measures one question at a time. Whether the pipeline around the question got faster or cheaper is counted per completed task, retries and review included, and that count is yours to make.
 - Text only, as the API is.
 - The split is by hash, so small sets need manual balancing with `split`.
 
