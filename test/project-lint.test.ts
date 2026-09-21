@@ -86,6 +86,16 @@ test('names that would reach Object.prototype are refused everywhere', () => {
   assert.equal(({} as Record<string, unknown>).other, undefined);
 });
 
+test('inherited Object.prototype names are refused as well', () => {
+  const dir = tempProject(
+    { questions: { toString: noul, c: { type: 'choice', instructions: 'x', criteria: { valueOf: 'x', other: 'rest' } }, q: noul } },
+    [{ id: '1', state: 'one', labels: { q: true, hasOwnProperty: true } }],
+  );
+  const { project, issues } = loadProject(dir);
+  assert.deepEqual(Object.keys(project.questions), ['q']);
+  assert.equal(issues.filter((issue) => /reserved/.test(issue.message)).length, 3);
+});
+
 test('labels must match the question type', () => {
   const dir = tempProject(
     { questions: { q: noul, c: { type: 'choice', instructions: 'x', criteria: { a: 'A', other: 'rest' } }, s: { type: 'score', instructions: 'x', criteria: ['low', 'high'] } } },

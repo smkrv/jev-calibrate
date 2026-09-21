@@ -16,11 +16,9 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
-/** Names that would reach Object.prototype when used as a key of a plain object. */
-const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-
+/** Names that would reach Object.prototype when used as a key of a plain object, inherited ones such as toString included. */
 export function isSafeKey(key: string): boolean {
-  return !RESERVED_KEYS.has(key);
+  return key !== 'prototype' && !(key in Object.prototype);
 }
 
 function parseQuestion(id: string, raw: unknown, issues: Issue[]): Question | undefined {
