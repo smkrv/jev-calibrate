@@ -12,7 +12,7 @@ import { selectSplit } from './split.ts';
 import { ProjectError } from './project.ts';
 import type { Project, Split } from './types.ts';
 
-export const VERSION = '0.1.9';
+export const VERSION = '0.1.11';
 
 export type CheckOptions = ProviderOptions & {
   split: Split | 'all';
